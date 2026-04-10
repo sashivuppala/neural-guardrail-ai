@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Column, DateTime, Float, Integer, String, create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -25,7 +25,7 @@ class RequestLog(Base):
     anomaly_score = Column(Float, nullable=False)
     decision = Column(String, nullable=False)
     reason = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
 
 engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
@@ -54,3 +54,6 @@ def log_request(payload: dict, score: float, decision: str, reason: str) -> None
         session.commit()
     finally:
         session.close()
+
+
+init_db()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, deque
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
@@ -12,14 +13,15 @@ from database.sqlite_logger import init_db, log_request
 from model.inference import InferenceService
 
 
-app = FastAPI(title="NeuralGuardrail-AI", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="NeuralGuardrail-AI", version="1.0.0", lifespan=lifespan)
 inference_service = InferenceService()
 recent_signatures: deque[tuple[str, str, str]] = deque(maxlen=50)
-
-
-@app.on_event("startup")
-def startup_event() -> None:
-    init_db()
 
 
 @app.get("/health")

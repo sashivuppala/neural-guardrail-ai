@@ -2,6 +2,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
+.venv_local/
+artifacts/*.csv
+artifacts/*.err.log
+artifacts/*.out.log
 artifacts/*.db
 artifacts/*.h5
 artifacts/*.joblib

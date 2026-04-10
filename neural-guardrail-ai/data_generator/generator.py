@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -127,7 +127,7 @@ def _burst_requests(base_time: datetime, rng: np.random.Generator, size: int = 6
 
 def generate_api_traffic(num_rows: int = 4000, seed: int | None = None) -> pd.DataFrame:
     rng = np.random.default_rng(settings.random_seed if seed is None else seed)
-    current_time = datetime.utcnow() - timedelta(minutes=num_rows)
+    current_time = datetime.now(timezone.utc) - timedelta(minutes=num_rows)
     records: list[TrafficPattern] = []
 
     while len(records) < num_rows:
