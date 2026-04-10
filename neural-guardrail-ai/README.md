@@ -2,6 +2,12 @@
 
 NeuralGuardrail-AI is an end-to-end Python project that simulates API traffic, trains an LSTM-based anomaly detector, and exposes a FastAPI service that applies guardrail decisions of `ALLOW`, `THROTTLE`, or `BLOCK`.
 
+## Documentation
+
+- `README.md` gives the quick-start workflow
+- `PROJECT_GUIDE.md` is the combined Help + About guide for technical and non-technical readers
+- `DOCUMENTATION.md` is a submission-friendly entry document that points to the full guide
+
 ## Features
 
 - Synthetic API traffic generation with realistic anomaly patterns
