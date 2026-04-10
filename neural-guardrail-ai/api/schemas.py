@@ -19,3 +19,12 @@ class AnalyzeResponse(BaseModel):
     anomaly_score: float
     decision: Literal["ALLOW", "THROTTLE", "BLOCK"]
     reason: str
+
+
+class MetricsResponse(BaseModel):
+    total_requests: int
+    average_anomaly_score: float
+    max_anomaly_score: float
+    decision_counts: dict[str, int]
+    top_reasons: dict[str, int]
+    last_request_at: str | None

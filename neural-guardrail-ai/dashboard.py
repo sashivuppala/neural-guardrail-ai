@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 
 import pandas as pd
@@ -18,10 +19,28 @@ def load_logs() -> pd.DataFrame:
         return pd.DataFrame()
 
 
+def load_evaluation() -> dict:
+    if not settings.evaluation_path.exists():
+        return {}
+    try:
+        return json.loads(settings.evaluation_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 st.set_page_config(page_title="NeuralGuardrail-AI Dashboard", layout="wide")
 st.title("NeuralGuardrail-AI Dashboard")
 
 logs_df = load_logs()
+evaluation = load_evaluation()
+
+if evaluation:
+    st.subheader("Model Evaluation")
+    eval_col1, eval_col2, eval_col3, eval_col4 = st.columns(4)
+    eval_col1.metric("Test AUC", evaluation.get("test_auc", 0))
+    eval_col2.metric("Precision", evaluation.get("precision", 0))
+    eval_col3.metric("Recall", evaluation.get("recall", 0))
+    eval_col4.metric("F1 Score", evaluation.get("f1_score", 0))
 
 if logs_df.empty:
     st.info("No request logs found yet. Start the API and send traffic to populate the dashboard.")
@@ -32,8 +51,15 @@ else:
     col2.metric("Blocked", int((logs_df["decision"] == "BLOCK").sum()))
     col3.metric("Throttled", int((logs_df["decision"] == "THROTTLE").sum()))
 
+    score_col1, score_col2 = st.columns(2)
+    score_col1.metric("Average Score", round(float(logs_df["anomaly_score"].mean()), 4))
+    score_col2.metric("Max Score", round(float(logs_df["anomaly_score"].max()), 4))
+
     st.subheader("Decision Distribution")
     st.bar_chart(logs_df["decision"].value_counts())
+
+    st.subheader("Top Guardrail Reasons")
+    st.bar_chart(logs_df["reason"].value_counts().head(5))
 
     st.subheader("Anomaly Score Trend")
     trend_df = logs_df[["created_at", "anomaly_score"]].set_index("created_at")

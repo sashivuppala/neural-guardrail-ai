@@ -8,8 +8,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from api.decision_engine import apply_guardrail
-from api.schemas import AnalyzeRequest, AnalyzeResponse
-from database.sqlite_logger import init_db, log_request
+from api.schemas import AnalyzeRequest, AnalyzeResponse, MetricsResponse
+from database.sqlite_logger import init_db, log_request, summarize_requests
 from model.inference import InferenceService
 
 
@@ -25,8 +25,16 @@ recent_signatures: deque[tuple[str, str, str]] = deque(maxlen=50)
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, str | bool]:
+    return {
+        "status": "ok",
+        "model_loaded": inference_service.model is not None,
+    }
+
+
+@app.get("/metrics", response_model=MetricsResponse)
+def metrics() -> MetricsResponse:
+    return MetricsResponse(**summarize_requests())
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)

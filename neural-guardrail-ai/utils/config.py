@@ -18,6 +18,7 @@ class Settings:
     model_path: Path = ARTIFACTS_DIR / "model.h5"
     preprocessor_path: Path = ARTIFACTS_DIR / "preprocessor.joblib"
     metadata_path: Path = ARTIFACTS_DIR / "metadata.joblib"
+    evaluation_path: Path = ARTIFACTS_DIR / "evaluation.json"
     database_url: str = f"sqlite:///{ARTIFACTS_DIR / 'guardrail_logs.db'}"
     random_seed: int = 42
 

@@ -21,3 +21,7 @@ please see:
 For the quick-start version, see:
 
 - [README.md](C:\Users\kiran\OneDrive\Documents\New project\neural-guardrail-ai\README.md)
+
+For a presentation-ready walkthrough, see:
+
+- [DEMO_SCENARIOS.md](C:\Users\kiran\OneDrive\Documents\New project\neural-guardrail-ai\DEMO_SCENARIOS.md)

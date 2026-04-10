@@ -1,49 +1,66 @@
 # NeuralGuardrail-AI
 
-NeuralGuardrail-AI is an end-to-end Python project that simulates API traffic, trains an LSTM-based anomaly detector, and exposes a FastAPI service that applies guardrail decisions of `ALLOW`, `THROTTLE`, or `BLOCK`.
+NeuralGuardrail-AI is an end-to-end API protection prototype that detects suspicious API behavior and returns explainable runtime decisions: `ALLOW`, `THROTTLE`, or `BLOCK`.
 
-## Documentation
+It combines synthetic traffic generation, LSTM-based anomaly scoring, heuristic guardrail rules, FastAPI serving, SQLite audit logging, Streamlit monitoring, Docker support, and automated tests.
 
-- `README.md` gives the quick-start workflow
-- `PROJECT_GUIDE.md` is the combined Help + About guide for technical and non-technical readers
-- `DOCUMENTATION.md` is a submission-friendly entry document that points to the full guide
+## Why It Stands Out
 
-## Features
+- Sequence-aware anomaly detection for API request behavior
+- Hybrid neural and rule-based scoring for explainable decisions
+- Safe fallback mode when model artifacts are not available
+- Operational `/metrics` endpoint for runtime observability
+- Training evaluation artifact with AUC, precision, recall, F1, and confusion matrix
+- SQLite decision audit trail
+- Dashboard for model quality, traffic trends, decision counts, and top reasons
+- Clean modular structure suitable for demos, interviews, and extension
 
-- Synthetic API traffic generation with realistic anomaly patterns
-- Sequence-aware feature engineering for LSTM training
-- Supervised anomaly scoring model built with TensorFlow/Keras
-- FastAPI inference endpoint with guardrail explanations
-- SQLite request logging
-- Optional Streamlit dashboard for score and decision trends
-- Docker support
-- Basic unit and API tests
+## Architecture
+
+```text
+Synthetic Traffic -> Preprocessing -> LSTM Training -> Saved Artifacts
+                                      |
+Incoming Request -> FastAPI -> Inference + Rules -> Guardrail Decision
+                                      |
+                            SQLite Logs + Metrics + Dashboard
+```
 
 ## Project Structure
 
 ```text
 neural-guardrail-ai/
 ├── api/
-├── artifacts/
+│   ├── app.py
+│   ├── decision_engine.py
+│   └── schemas.py
 ├── data_generator/
+│   └── generator.py
 ├── database/
+│   └── sqlite_logger.py
 ├── model/
+│   ├── inference.py
+│   ├── preprocessing.py
+│   └── trainer.py
 ├── tests/
+│   ├── test_api.py
+│   └── test_decision_engine.py
 ├── utils/
+│   └── config.py
 ├── dashboard.py
 ├── Dockerfile
 ├── main.py
+├── PROJECT_GUIDE.md
+├── DEMO_SCENARIOS.md
 ├── requirements.txt
 └── train.py
 ```
 
 ## Setup
 
-1. Create and activate a virtual environment.
-
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 Windows PowerShell:
@@ -51,21 +68,16 @@ Windows PowerShell:
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-```
-
-2. Install dependencies.
-
-```bash
 pip install -r requirements.txt
 ```
 
-## Generate Dataset
+## Generate Data
 
 ```bash
 python -m data_generator.generator --rows 4000 --output artifacts/api_traffic.csv
 ```
 
-Generated columns:
+Generated fields:
 
 - `endpoint`
 - `method`
@@ -76,7 +88,7 @@ Generated columns:
 - `is_anomaly`
 - `anomaly_type`
 
-## Train the Model
+## Train The Model
 
 ```bash
 python train.py --data artifacts/api_traffic.csv --artifacts-dir artifacts
@@ -87,8 +99,20 @@ Saved artifacts:
 - `artifacts/model.h5`
 - `artifacts/preprocessor.joblib`
 - `artifacts/metadata.joblib`
+- `artifacts/evaluation.json`
 
-## Run the API Server
+The evaluation file includes:
+
+- test loss
+- test accuracy
+- test AUC
+- precision
+- recall
+- F1 score
+- confusion matrix
+- positive class rate
+
+## Run The API
 
 ```bash
 uvicorn main:app --reload
@@ -97,11 +121,12 @@ uvicorn main:app --reload
 Endpoints:
 
 - `GET /health`
+- `GET /metrics`
 - `POST /analyze`
 
 ## Sample Requests
 
-### Normal request
+Normal request:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/analyze" \
@@ -109,7 +134,7 @@ curl -X POST "http://127.0.0.1:8000/analyze" \
   -d "{\"endpoint\":\"/api/products\",\"method\":\"GET\",\"response_time\":140,\"payload_size\":420,\"user_role\":\"user\"}"
 ```
 
-### Malicious request
+Suspicious request:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/analyze" \
@@ -117,31 +142,28 @@ curl -X POST "http://127.0.0.1:8000/analyze" \
   -d "{\"endpoint\":\"/admin/config\",\"method\":\"POST\",\"response_time\":120,\"payload_size\":4500,\"user_role\":\"guest\"}"
 ```
 
-### Edge case
+Operational metrics:
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/analyze" \
-  -H "Content-Type: application/json" \
-  -d "{\"endpoint\":\"/api/upload\",\"method\":\"PUT\",\"response_time\":260,\"payload_size\":3900,\"user_role\":\"admin\"}"
+curl "http://127.0.0.1:8000/metrics"
 ```
 
-## Logging
-
-Every analyzed request is stored in SQLite at `artifacts/guardrail_logs.db` with:
-
-- request metadata
-- anomaly score
-- decision
-- explanation
-- timestamp
-
-## Optional Dashboard
+## Dashboard
 
 ```bash
 streamlit run dashboard.py
 ```
 
-The dashboard shows score trends and blocked/throttled totals from the SQLite logs.
+The dashboard shows:
+
+- model evaluation summary
+- total analyzed requests
+- blocked and throttled counts
+- average and max anomaly score
+- decision distribution
+- top guardrail reasons
+- anomaly score trend
+- recent decision log
 
 ## Run Tests
 
@@ -156,7 +178,6 @@ docker build -t neural-guardrail-ai .
 docker run -p 8000:8000 neural-guardrail-ai
 ```
 
-## Notes
+## Positioning
 
-- Train the model before running the API if you want neural scoring enabled.
-- If model artifacts do not exist yet, the API still runs in heuristic guardrail mode.
+NeuralGuardrail-AI is best described as a strong prototype for AI-assisted API security. It is intentionally small enough to understand, but complete enough to demonstrate the full lifecycle from data simulation to model training, live scoring, explainable action, logging, monitoring, and testing.

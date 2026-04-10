@@ -43,7 +43,7 @@ def heuristic_score(payload: dict, recent_identical_count: int = 1) -> float:
     reasons = derive_reasons(payload, recent_identical_count=recent_identical_count)
     severity_map = {
         "unauthorized access": 0.48,
-        "abnormal payload": 0.22,
+        "abnormal payload": 0.38,
         "response latency spike": 0.12,
         "high-frequency burst": 0.2,
         "irregular endpoint pattern": 0.18,

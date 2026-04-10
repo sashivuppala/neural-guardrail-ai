@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import joblib
 import pandas as pd
+from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score
 
 from model.preprocessing import fit_transform_sequences, save_preprocessor
 from utils.config import settings
@@ -55,11 +57,16 @@ def train_and_save(data_path: Path, artifacts_dir: Path) -> dict[str, float | st
         callbacks=[early_stopping],
     )
     loss, accuracy, auc = model.evaluate(dataset.X_test, dataset.y_test, verbose=0)
+    probability_scores = model.predict(dataset.X_test, verbose=0).reshape(-1)
+    predicted_labels = (probability_scores >= 0.5).astype(int)
+    true_labels = dataset.y_test.astype(int)
+    tn, fp, fn, tp = confusion_matrix(true_labels, predicted_labels, labels=[0, 1]).ravel()
 
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     model_path = artifacts_dir / settings.model_path.name
     preprocessor_path = artifacts_dir / settings.preprocessor_path.name
     metadata_path = artifacts_dir / settings.metadata_path.name
+    evaluation_path = artifacts_dir / settings.evaluation_path.name
 
     model.save(model_path)
     save_preprocessor(dataset.preprocessor, str(preprocessor_path))
@@ -71,12 +78,33 @@ def train_and_save(data_path: Path, artifacts_dir: Path) -> dict[str, float | st
         },
         metadata_path,
     )
+    evaluation = {
+        "threshold": 0.5,
+        "test_loss": round(float(loss), 4),
+        "test_accuracy": round(float(accuracy), 4),
+        "test_auc": round(float(auc), 4),
+        "roc_auc_from_probabilities": round(float(roc_auc_score(true_labels, probability_scores)), 4),
+        "precision": round(float(precision_score(true_labels, predicted_labels, zero_division=0)), 4),
+        "recall": round(float(recall_score(true_labels, predicted_labels, zero_division=0)), 4),
+        "f1_score": round(float(f1_score(true_labels, predicted_labels, zero_division=0)), 4),
+        "confusion_matrix": {
+            "true_negative": int(tn),
+            "false_positive": int(fp),
+            "false_negative": int(fn),
+            "true_positive": int(tp),
+        },
+        "test_rows": int(len(true_labels)),
+        "positive_rate": round(float(true_labels.mean()), 4),
+    }
+    evaluation_path.write_text(json.dumps(evaluation, indent=2), encoding="utf-8")
 
     return {
         "model_path": str(model_path),
         "preprocessor_path": str(preprocessor_path),
         "metadata_path": str(metadata_path),
+        "evaluation_path": str(evaluation_path),
         "test_loss": round(float(loss), 4),
         "test_accuracy": round(float(accuracy), 4),
         "test_auc": round(float(auc), 4),
+        "test_f1": evaluation["f1_score"],
     }
