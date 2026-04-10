@@ -1,0 +1,12 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+tensorflow==2.18.0
+pandas==2.2.3
+numpy==2.0.2
+scikit-learn==1.6.1
+joblib==1.4.2
+streamlit==1.44.1
+sqlalchemy==2.0.40
+python-multipart==0.0.20
+pytest==8.3.5
+httpx==0.28.1
